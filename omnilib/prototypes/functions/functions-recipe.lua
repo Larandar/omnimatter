@@ -86,6 +86,44 @@ function omni.lib.set_recipe_results(recipename, ...)
     end
 end
 
+local function parse_item_argument(item)
+    if not item then
+        return nil, nil
+        -- A single string -> a minimal item prototype
+    elseif type(item) == "string" then
+        return {type = "item", name = item, amount = 1},
+               {type = "item", name = item, amount = 1}
+        -- A table of 1 or 2 element -> name + amount
+    elseif type(item[1]) == "string" then
+        return {type = "item", name = item[1], amount = item[2] or 1},
+               {type = "item", name = item[1], amount = item[2] or 1}
+        -- There is a name -> we parse it as an item prototype
+    elseif item.name then
+        -- We add default values
+        if not item.type then item.type = "item" end
+        if not item.amout then item.amount = 1 end
+        return item, item
+        -- A split normal/expensive via named table
+    elseif item.normal or item.expensive then
+        local normal_item, expensive_item = nil, nil
+        if item.normal then
+            normal_item, _ = parse_item_argument(item.normal)
+        end
+        if item.expensive then
+            _, expensive_item = parse_item_argument(item.expensive)
+        end
+        return normal_item, expensive_item
+        -- A split normal/expensive via list
+    elseif type(item[1]) == "table" then
+        local normal_item, expensive_item = nil, nil
+        if item[1] then normal_item, _ = parse_item_argument(item[1]) end
+        if item[2] then _, expensive_item = parse_item_argument(item[2]) end
+        return normal_item, expensive_item
+    else
+        log("Could not parse item: " .. item)
+        return nil, nil
+    end
+end
 
 local function merge_ingredients(ingredients, to_add)
     -- Check if ingredient the ingredient is already used
@@ -103,7 +141,6 @@ local function merge_ingredients(ingredients, to_add)
     table.insert(ingredients, to_add)
 end
 
-
 function omni.lib.add_recipe_ingredient(recipename, ingredient)
     local recipe = data.raw.recipe[recipename]
 
@@ -113,53 +150,10 @@ function omni.lib.add_recipe_ingredient(recipename, ingredient)
         return
     end
 
-    local normal_ingredient = {}
-    local expensive_ingredient = {}
-    if not ingredient.name then
-        if type(ingredient) == "string" then
-            normal_ingredient = {type = "item", name = ingredient, amount = 1}
-            expensive_ingredient = {type = "item", name = ingredient, amount = 1}
-        elseif ingredient.normal or ingredient.expensive then
-            if ingredient.normal then
-                normal_ingredient = {
-                    type = ingredient.normal.type or "item",
-                    name = ingredient.normal.name or ingredient.normal[1],
-                    amount = ingredient.normal.amount or
-                        ingredient.normal[2] or 1
-                }
-            else
-                normal_ingredient = nil
-            end
-            if ingredient.expensive then
-                expensive_ingredient = {
-                    type = ingredient.expensive.type or "item",
-                    name = ingredient.expensive.name or
-                        ingredient.expensive[1],
-                    amount = ingredient.expensive.amount or
-                        ingredient.expensive[2] or 1
-                }
-            else
-                expensive_ingredient = nil
-            end
-        elseif ingredient[1].name then
-            normal_ingredient = ingredient[1]
-            expensive_ingredient = ingredient[2]
-        elseif type(ingredient[1]) == "string" then
-            normal_ingredient = {
-                type = "item",
-                name = ingredient[1],
-                amount = ingredient[2]
-            }
-            expensive_ingredient = {
-                type = "item",
-                name = ingredient[1],
-                amount = ingredient[2]
-            }
-        end
-    else
-        normal_ingredient = ingredient
-        expensive_ingredient = ingredient
-    end
+    -- Parse passed ingredient
+    local normal_ingredient, expensive_ingredient =
+        parse_item_argument(ingredient)
+
     -- recipe.ingredients --If only .normal needs to be modified, keep ingredients, else copy into .normal/.expensive
     if recipe.ingredients and normal_ingredient ~= expensive_ingredient then
         recipe.normal = {}
@@ -199,7 +193,8 @@ function omni.lib.add_recipe_ingredient(recipename, ingredient)
         merge_ingredients(recipe.normal.ingredients, normal_ingredient)
     end
     -- recipe.expensive.ingredients
-    if expensive_ingredient and recipe.expensive and recipe.expensive.ingredients then
+    if expensive_ingredient and recipe.expensive and
+        recipe.expensive.ingredients then
         merge_ingredients(recipe.expensive.ingredients, expensive_ingredient)
     end
 end
