@@ -125,6 +125,43 @@ local function parse_item_argument(item)
     end
 end
 
+local function split_expensive_recipe(recipe)
+    -- Already slitted
+    if recipe.normal and recipe.expensive then return end
+
+    recipe.normal = {}
+    recipe.expensive = {}
+
+    if recipe.ingredients then
+        recipe.normal.ingredients = table.deepcopy(recipe.ingredients)
+        recipe.expensive.ingredients = table.deepcopy(recipe.ingredients)
+        -- Clean base recipe
+        recipe.ingredients = nil
+    end
+
+    if recipe.result then
+        local results = {
+            {
+                type = "item",
+                name = recipe.result,
+                amount = recipe.result_count or 1
+            }
+        }
+        recipe.normal.results = table.deepcopy(results)
+        recipe.expensive.results = table.deepcopy(results)
+        -- Clean base recipe
+        recipe.result = nil
+        recipe.result_count = nil
+    end
+
+    if recipe.results then
+        recipe.normal.results = table.deepcopy(recipe.results)
+        recipe.expensive.results = table.deepcopy(recipe.results)
+        -- Clean base recipe
+        recipe.results = nil
+    end
+end
+
 local function merge_ingredients(ingredients, to_add)
     -- Check if ingredient the ingredient is already used
     for i, ingredient in pairs(ingredients) do
@@ -156,35 +193,7 @@ function omni.lib.add_recipe_ingredient(recipename, ingredient)
 
     -- recipe.ingredients --If only .normal needs to be modified, keep ingredients, else copy into .normal/.expensive
     if recipe.ingredients and normal_ingredient ~= expensive_ingredient then
-        recipe.normal = {}
-        recipe.expensive = {}
-        recipe.normal.ingredients = table.deepcopy(recipe.ingredients)
-        recipe.expensive.ingredients = table.deepcopy(recipe.ingredients)
-        recipe.ingredients = nil
-        -- move result(s) aswell into diffs
-        if recipe.result then
-            recipe.normal.results = {
-                {
-                    type = "item",
-                    name = recipe.result,
-                    amount = recipe.result_count or 1
-                }
-            }
-            recipe.expensive.results = {
-                {
-                    type = "item",
-                    name = recipe.result,
-                    amount = recipe.result_count or 1
-                }
-            }
-            recipe.result = nil
-            recipe.result_count = nil
-        end
-        if recipe.results then
-            recipe.normal.results = table.deepcopy(recipe.results)
-            recipe.expensive.results = table.deepcopy(recipe.results)
-            recipe.results = nil
-        end
+        split_expensive_recipe(recipe)
     elseif recipe.ingredients and normal_ingredient then
         merge_ingredients(recipe.ingredients, normal_ingredient)
     end
