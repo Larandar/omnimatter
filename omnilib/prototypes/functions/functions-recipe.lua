@@ -86,6 +86,24 @@ function omni.lib.set_recipe_results(recipename, ...)
     end
 end
 
+
+local function merge_ingredients(ingredients, to_add)
+    -- Check if ingredient the ingredient is already used
+    for i, ingredient in pairs(ingredients) do
+        -- check if nametags exist (only check ing[i] when no name tags exist)
+        if ingredient.name and ingredient.name == to_add.name then
+            ingredient.amount = ingredient.amount + to_add.amount
+            return
+        elseif ingredient[1] and ingredient[1] == to_add.name then
+            ingredient[2] = ingredient[2] + to_add.amount
+            return
+        end
+    end
+
+    table.insert(ingredients, to_add)
+end
+
+
 function omni.lib.add_recipe_ingredient(recipename, ingredient)
     local recipe = data.raw.recipe[recipename]
 
@@ -142,7 +160,6 @@ function omni.lib.add_recipe_ingredient(recipename, ingredient)
         normal_ingredient = ingredient
         expensive_ingredient = ingredient
     end
-    local found = false
     -- recipe.ingredients --If only .normal needs to be modified, keep ingredients, else copy into .normal/.expensive
     if recipe.ingredients and normal_ingredient ~= expensive_ingredient then
         recipe.normal = {}
@@ -175,65 +192,15 @@ function omni.lib.add_recipe_ingredient(recipename, ingredient)
             recipe.results = nil
         end
     elseif recipe.ingredients and normal_ingredient then
-        found = false
-        -- check if ingredient the ingredient is already used
-        for i, ing in pairs(recipe.ingredients) do
-            -- check if nametags exist (only check ing[i] when no name tags exist)
-            if ing.name then
-                if ing.name == normal_ingredient.name then
-                    found = true
-                    ing.amount = ing.amount + normal_ingredient.amount
-                    break
-                end
-            elseif ing[1] and ing[1] == normal_ingredient.name then
-                found = true
-                ing[2] = ing[2] + normal_ingredient.amount
-                break
-            end
-        end
-        if not found then table.insert(recipe.ingredients, normal_ingredient) end
+        merge_ingredients(recipe.ingredients, normal_ingredient)
     end
     -- recipe.normal.ingredients
     if normal_ingredient and recipe.normal and recipe.normal.ingredients then
-        found = false
-        for i, ing in pairs(recipe.normal.ingredients) do
-            -- check if nametags exist (only check ing[i] when no name tags exist)
-            if ing.name then
-                if ing.name == normal_ingredient.name then
-                    found = true
-                    ing.amount = ing.amount + normal_ingredient.amount
-                    break
-                end
-            elseif ing[1] and ing[1] == normal_ingredient.name then
-                found = true
-                ing[2] = ing[2] + normal_ingredient.amount
-                break
-            end
-        end
-        if not found then
-            table.insert(recipe.normal.ingredients, normal_ingredient)
-        end
+        merge_ingredients(recipe.normal.ingredients, normal_ingredient)
     end
     -- recipe.expensive.ingredients
     if expensive_ingredient and recipe.expensive and recipe.expensive.ingredients then
-        found = false
-        for i, ing in pairs(recipe.expensive.ingredients) do
-            -- check if nametags exist (only check ing[i] when no name tags exist)
-            if ing.name then
-                if ing.name == expensive_ingredient.name then
-                    found = true
-                    ing.amount = ing.amount + expensive_ingredient.amount
-                    break
-                end
-            elseif ing[1] and ing[1] == expensive_ingredient.name then
-                found = true
-                ing[2] = ing[2] + expensive_ingredient.amount
-                break
-            end
-        end
-        if not found then
-            table.insert(recipe.expensive.ingredients, expensive_ingredient)
-        end
+        merge_ingredients(recipe.expensive.ingredients, expensive_ingredient)
     end
 end
 
