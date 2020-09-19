@@ -198,20 +198,31 @@ function omni.lib.add_recipe_ingredient(recipename, ingredient)
     local normal_ingredient, expensive_ingredient =
         parse_item_argument(ingredient)
 
-    -- recipe.ingredients --If only .normal needs to be modified, keep ingredients, else copy into .normal/.expensive
-    if recipe.ingredients and normal_ingredient ~= expensive_ingredient then
+    -- Splitted recipe ingredients
+    if normal_ingredient ~= expensive_ingredient or
+        (recipe.normal or recipe.expensive) then
+        -- If not already do, split the recipe
         split_expensive_recipe(recipe)
-    elseif recipe.ingredients and normal_ingredient then
+
+        if normal_ingredient then
+            -- If there was no ingredient then we will make one
+            if not recipe.normal.ingredients then
+                recipe.normal.ingredients = {}
+            end
+            merge_ingredients(recipe.normal.ingredients, normal_ingredient)
+        end
+
+        if expensive_ingredient then
+            -- If there was no ingredient then we will make one
+            if not recipe.expensive.ingredients then
+                recipe.expensive.ingredients = {}
+            end
+            merge_ingredients(recipe.expensive.ingredients, expensive_ingredient)
+        end
+    elseif normal_ingredient then
+        -- If there was no ingredient then we will make one
+        if not recipe.ingredients then recipe.ingredients = {} end
         merge_ingredients(recipe.ingredients, normal_ingredient)
-    end
-    -- recipe.normal.ingredients
-    if normal_ingredient and recipe.normal and recipe.normal.ingredients then
-        merge_ingredients(recipe.normal.ingredients, normal_ingredient)
-    end
-    -- recipe.expensive.ingredients
-    if expensive_ingredient and recipe.expensive and
-        recipe.expensive.ingredients then
-        merge_ingredients(recipe.expensive.ingredients, expensive_ingredient)
     end
 end
 
