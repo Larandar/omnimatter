@@ -87,150 +87,153 @@ function omni.lib.set_recipe_results(recipename, ...)
 end
 
 function omni.lib.add_recipe_ingredient(recipename, ingredient)
-    local rec = data.raw.recipe[recipename]
-    if rec then
-        local norm = {}
-        local expens = {}
-        if not ingredient.name then
-            if type(ingredient) == "string" then
-                norm = {type = "item", name = ingredient, amount = 1}
-                expens = {type = "item", name = ingredient, amount = 1}
-            elseif ingredient.normal or ingredient.expensive then
-                if ingredient.normal then
-                    norm = {
-                        type = ingredient.normal.type or "item",
-                        name = ingredient.normal.name or ingredient.normal[1],
-                        amount = ingredient.normal.amount or
-                            ingredient.normal[2] or 1
-                    }
-                else
-                    norm = nil
-                end
-                if ingredient.expensive then
-                    expens = {
-                        type = ingredient.expensive.type or "item",
-                        name = ingredient.expensive.name or
-                            ingredient.expensive[1],
-                        amount = ingredient.expensive.amount or
-                            ingredient.expensive[2] or 1
-                    }
-                else
-                    expens = nil
-                end
-            elseif ingredient[1].name then
-                norm = ingredient[1]
-                expens = ingredient[2]
-            elseif type(ingredient[1]) == "string" then
-                norm = {
-                    type = "item",
-                    name = ingredient[1],
-                    amount = ingredient[2]
+    local recipe = data.raw.recipe[recipename]
+
+    -- The recipe does not exist, we can do nothing
+    if not recipe then
+        -- log("omni.lib.add_recipe_ingredient: "..recipe.." does not exist.")
+        return
+    end
+
+    local normal_ingredient = {}
+    local expensive_ingredient = {}
+    if not ingredient.name then
+        if type(ingredient) == "string" then
+            normal_ingredient = {type = "item", name = ingredient, amount = 1}
+            expensive_ingredient = {type = "item", name = ingredient, amount = 1}
+        elseif ingredient.normal or ingredient.expensive then
+            if ingredient.normal then
+                normal_ingredient = {
+                    type = ingredient.normal.type or "item",
+                    name = ingredient.normal.name or ingredient.normal[1],
+                    amount = ingredient.normal.amount or
+                        ingredient.normal[2] or 1
                 }
-                expens = {
-                    type = "item",
-                    name = ingredient[1],
-                    amount = ingredient[2]
+            else
+                normal_ingredient = nil
+            end
+            if ingredient.expensive then
+                expensive_ingredient = {
+                    type = ingredient.expensive.type or "item",
+                    name = ingredient.expensive.name or
+                        ingredient.expensive[1],
+                    amount = ingredient.expensive.amount or
+                        ingredient.expensive[2] or 1
                 }
+            else
+                expensive_ingredient = nil
             end
-        else
-            norm = ingredient
-            expens = ingredient
-        end
-        local found = false
-        -- rec.ingredients --If only .normal needs to be modified, keep ingredients, else copy into .normal/.expensive
-        if rec.ingredients and norm ~= expens then
-            rec.normal = {}
-            rec.expensive = {}
-            rec.normal.ingredients = table.deepcopy(rec.ingredients)
-            rec.expensive.ingredients = table.deepcopy(rec.ingredients)
-            rec.ingredients = nil
-            -- move result(s) aswell into diffs
-            if rec.result then
-                rec.normal.results = {
-                    {
-                        type = "item",
-                        name = rec.result,
-                        amount = rec.result_count or 1
-                    }
-                }
-                rec.expensive.results = {
-                    {
-                        type = "item",
-                        name = rec.result,
-                        amount = rec.result_count or 1
-                    }
-                }
-                rec.result = nil
-                rec.result_count = nil
-            end
-            if rec.results then
-                rec.normal.results = table.deepcopy(rec.results)
-                rec.expensive.results = table.deepcopy(rec.results)
-                rec.results = nil
-            end
-        elseif rec.ingredients and norm then
-            found = false
-            -- check if ingredient the ingredient is already used
-            for i, ing in pairs(rec.ingredients) do
-                -- check if nametags exist (only check ing[i] when no name tags exist)
-                if ing.name then
-                    if ing.name == norm.name then
-                        found = true
-                        ing.amount = ing.amount + norm.amount
-                        break
-                    end
-                elseif ing[1] and ing[1] == norm.name then
-                    found = true
-                    ing[2] = ing[2] + norm.amount
-                    break
-                end
-            end
-            if not found then table.insert(rec.ingredients, norm) end
-        end
-        -- rec.normal.ingredients
-        if norm and rec.normal and rec.normal.ingredients then
-            found = false
-            for i, ing in pairs(rec.normal.ingredients) do
-                -- check if nametags exist (only check ing[i] when no name tags exist)
-                if ing.name then
-                    if ing.name == norm.name then
-                        found = true
-                        ing.amount = ing.amount + norm.amount
-                        break
-                    end
-                elseif ing[1] and ing[1] == norm.name then
-                    found = true
-                    ing[2] = ing[2] + norm.amount
-                    break
-                end
-            end
-            if not found then
-                table.insert(rec.normal.ingredients, norm)
-            end
-        end
-        -- rec.expensive.ingredients
-        if expens and rec.expensive and rec.expensive.ingredients then
-            found = false
-            for i, ing in pairs(rec.expensive.ingredients) do
-                -- check if nametags exist (only check ing[i] when no name tags exist)
-                if ing.name then
-                    if ing.name == expens.name then
-                        found = true
-                        ing.amount = ing.amount + expens.amount
-                        break
-                    end
-                elseif ing[1] and ing[1] == expens.name then
-                    found = true
-                    ing[2] = ing[2] + expens.amount
-                    break
-                end
-            end
-            if not found then
-                table.insert(rec.expensive.ingredients, expens)
-            end
+        elseif ingredient[1].name then
+            normal_ingredient = ingredient[1]
+            expensive_ingredient = ingredient[2]
+        elseif type(ingredient[1]) == "string" then
+            normal_ingredient = {
+                type = "item",
+                name = ingredient[1],
+                amount = ingredient[2]
+            }
+            expensive_ingredient = {
+                type = "item",
+                name = ingredient[1],
+                amount = ingredient[2]
+            }
         end
     else
-        -- log(recipe.." does not exist.")
+        normal_ingredient = ingredient
+        expensive_ingredient = ingredient
+    end
+    local found = false
+    -- recipe.ingredients --If only .normal needs to be modified, keep ingredients, else copy into .normal/.expensive
+    if recipe.ingredients and normal_ingredient ~= expensive_ingredient then
+        recipe.normal = {}
+        recipe.expensive = {}
+        recipe.normal.ingredients = table.deepcopy(recipe.ingredients)
+        recipe.expensive.ingredients = table.deepcopy(recipe.ingredients)
+        recipe.ingredients = nil
+        -- move result(s) aswell into diffs
+        if recipe.result then
+            recipe.normal.results = {
+                {
+                    type = "item",
+                    name = recipe.result,
+                    amount = recipe.result_count or 1
+                }
+            }
+            recipe.expensive.results = {
+                {
+                    type = "item",
+                    name = recipe.result,
+                    amount = recipe.result_count or 1
+                }
+            }
+            recipe.result = nil
+            recipe.result_count = nil
+        end
+        if recipe.results then
+            recipe.normal.results = table.deepcopy(recipe.results)
+            recipe.expensive.results = table.deepcopy(recipe.results)
+            recipe.results = nil
+        end
+    elseif recipe.ingredients and normal_ingredient then
+        found = false
+        -- check if ingredient the ingredient is already used
+        for i, ing in pairs(recipe.ingredients) do
+            -- check if nametags exist (only check ing[i] when no name tags exist)
+            if ing.name then
+                if ing.name == normal_ingredient.name then
+                    found = true
+                    ing.amount = ing.amount + normal_ingredient.amount
+                    break
+                end
+            elseif ing[1] and ing[1] == normal_ingredient.name then
+                found = true
+                ing[2] = ing[2] + normal_ingredient.amount
+                break
+            end
+        end
+        if not found then table.insert(recipe.ingredients, normal_ingredient) end
+    end
+    -- recipe.normal.ingredients
+    if normal_ingredient and recipe.normal and recipe.normal.ingredients then
+        found = false
+        for i, ing in pairs(recipe.normal.ingredients) do
+            -- check if nametags exist (only check ing[i] when no name tags exist)
+            if ing.name then
+                if ing.name == normal_ingredient.name then
+                    found = true
+                    ing.amount = ing.amount + normal_ingredient.amount
+                    break
+                end
+            elseif ing[1] and ing[1] == normal_ingredient.name then
+                found = true
+                ing[2] = ing[2] + normal_ingredient.amount
+                break
+            end
+        end
+        if not found then
+            table.insert(recipe.normal.ingredients, normal_ingredient)
+        end
+    end
+    -- recipe.expensive.ingredients
+    if expensive_ingredient and recipe.expensive and recipe.expensive.ingredients then
+        found = false
+        for i, ing in pairs(recipe.expensive.ingredients) do
+            -- check if nametags exist (only check ing[i] when no name tags exist)
+            if ing.name then
+                if ing.name == expensive_ingredient.name then
+                    found = true
+                    ing.amount = ing.amount + expensive_ingredient.amount
+                    break
+                end
+            elseif ing[1] and ing[1] == expensive_ingredient.name then
+                found = true
+                ing[2] = ing[2] + expensive_ingredient.amount
+                break
+            end
+        end
+        if not found then
+            table.insert(recipe.expensive.ingredients, expensive_ingredient)
+        end
     end
 end
 
