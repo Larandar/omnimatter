@@ -1,8 +1,8 @@
 function omni.lib.set_recipe_ingredients(recipename, ...)
-    local rec = data.raw.recipe[recipename]
-    if rec then
+    local recipe = data.raw.recipe[recipename]
+    if recipe then
         local arg = {...}
-        local ing = {}
+        local ingredients = {}
         for i, v in pairs(arg) do
             local tmp = {}
             if type(v) == "string" then
@@ -23,24 +23,24 @@ function omni.lib.set_recipe_ingredients(recipename, ...)
                     }
                 end
             end
-            ing = omni.lib.union(ing, tmp)
+            ingredients = omni.lib.union(ingredients, tmp)
         end
 
-        if rec.ingredients then rec.ingredients = ing end
-        if rec.normal and rec.normal.ingredients then
-            rec.normal.ingredients = ing
+        if recipe.ingredients then recipe.ingredients = ingredients end
+        if recipe.normal and recipe.normal.ingredients then
+            recipe.normal.ingredients = ingredients
         end
-        if rec.expensive and rec.expensive.ingredients then
-            rec.expensive.ingredients = ing
+        if recipe.expensive and recipe.expensive.ingredients then
+            recipe.expensive.ingredients = ingredients
         end
     end
 end
 
 function omni.lib.set_recipe_results(recipename, ...)
-    local rec = data.raw.recipe[recipename]
-    if rec then
+    local recipe = data.raw.recipe[recipename]
+    if recipe then
         local arg = {...}
-        local res = {}
+        local results = {}
         for i, v in pairs(arg) do
             local tmp = {}
             if type(v) == "string" then
@@ -61,27 +61,27 @@ function omni.lib.set_recipe_results(recipename, ...)
                     }
                 end
             end
-            res = omni.lib.union(res, tmp)
+            results = omni.lib.union(results, tmp)
         end
-        if rec.result then
-            rec.result = nil
-            rec.result_count = nil
-            if not rec.results then rec.normal.results = {} end
+        if recipe.result then
+            recipe.result = nil
+            recipe.result_count = nil
+            if not recipe.results then recipe.normal.results = {} end
         end
-        if rec.results then rec.results = res end
-        if rec.normal then
-            if rec.normal.result then
-                rec.normal.result = nil
-                rec.normal.result_count = nil
+        if recipe.results then recipe.results = result end
+        if recipe.normal then
+            if recipe.normal.result then
+                recipe.normal.result = nil
+                recipe.normal.result_count = nil
             end
-            rec.normal.results = res
+            recipe.normal.results = result
         end
-        if rec.expensive then
-            if rec.expensive.result then
-                rec.expensive.result = nil
-                rec.expensive.result_count = nil
+        if recipe.expensive then
+            if recipe.expensive.result then
+                recipe.expensive.result = nil
+                recipe.expensive.result_count = nil
             end
-            rec.expensive.results = res
+            recipe.expensive.results = result
         end
     end
 end
@@ -172,7 +172,7 @@ end
 local function merge_ingredients(ingredients, to_add)
     -- Check if ingredient the ingredient is already used
     for i, ingredient in pairs(ingredients) do
-        -- check if nametags exist (only check ing[i] when no name tags exist)
+        -- check if nametags exist (only check ingredient[i] when no name tags exist)
         if ingredient.name and ingredient.name == to_add.name then
             ingredient.amount = ingredient.amount + to_add.amount
             return
@@ -227,8 +227,8 @@ function omni.lib.add_recipe_ingredient(recipename, ingredient)
 end
 
 function omni.lib.add_recipe_result(recipename, result)
-    local rec = data.raw.recipe[recipename]
-    if rec then
+    local recipe = data.raw.recipe[recipename]
+    if recipe then
         local norm = {}
         local expens = {}
         if not result.name then
@@ -268,93 +268,93 @@ function omni.lib.add_recipe_result(recipename, result)
         end
         local found = false
         -- Single result checks
-        if rec.result then
-            rec.results = {type = "item", name = rec.result, amount = 1}
-            rec.result = nil
-            rec.result_count = nil
+        if recipe.result then
+            recipe.results = {type = "item", name = recipe.result, amount = 1}
+            recipe.result = nil
+            recipe.result_count = nil
         end
-        if rec.normal.result then
-            rec.normal.results = {type = "item", name = rec.result, amount = 1}
-            rec.normal.result = nil
-            rec.normal.result_count = nil
+        if recipe.normal.result then
+            recipe.normal.results = {type = "item", name = recipe.result, amount = 1}
+            recipe.normal.result = nil
+            recipe.normal.result_count = nil
         end
-        if rec.expensive.result then
-            rec.expensive.results = {
+        if recipe.expensive.result then
+            recipe.expensive.results = {
                 type = "item",
-                name = rec.result,
+                name = recipe.result,
                 amount = 1
             }
-            rec.expensive.result = nil
-            rec.expensive.result_count = nil
+            recipe.expensive.result = nil
+            recipe.expensive.result_count = nil
         end
-        -- rec.results --If only .normal needs to be modified, keep results, else copy into .normal/.expensive
-        if rec.results and norm ~= expens then
-            rec.normal = {}
-            rec.expensive = {}
-            rec.normal.results = table.deepcopy(rec.results)
-            rec.expensive.results = table.deepcopy(rec.results)
-            rec.results = nil
-            if rec.ingredients then
-                rec.normal.results = table.deepcopy(rec.ingredients)
-                rec.expensive.results = table.deepcopy(rec.ingredients)
-                rec.ingredients = nil
+        -- recipe.results --If only .normal needs to be modified, keep results, else copy into .normal/.expensive
+        if recipe.results and norm ~= expens then
+            recipe.normal = {}
+            recipe.expensive = {}
+            recipe.normal.results = table.deepcopy(recipe.results)
+            recipe.expensive.results = table.deepcopy(recipe.results)
+            recipe.results = nil
+            if recipe.ingredients then
+                recipe.normal.results = table.deepcopy(recipe.ingredients)
+                recipe.expensive.results = table.deepcopy(recipe.ingredients)
+                recipe.ingredients = nil
             end
-        elseif rec.results and norm then
+        elseif recipe.results and norm then
             found = false
-            for i, res in pairs(rec.results) do
-                -- check if nametags exist (only check res[i] when no name tags exist)
-                if res.name then
-                    if res.name == norm.name then
+            for i, result in pairs(recipe.results) do
+                -- check if nametags exist (only check result[i] when no name tags exist)
+                if result.name then
+                    if result.name == norm.name then
                         found = true
-                        res.amount = res.amount + norm.amount
+                        result.amount = result.amount + norm.amount
                         break
                     end
-                elseif res[1] and res[1] == norm.name then
+                elseif result[1] and result[1] == norm.name then
                     found = true
-                    res[2] = res[2] + norm.amount
+                    result[2] = result[2] + norm.amount
                     break
                 end
             end
-            if not found then table.insert(rec.results, norm) end
+            if not found then table.insert(recipe.results, norm) end
         end
-        -- rec.normal.results
-        if norm and rec.normal and rec.normal.results then
+        -- recipe.normal.results
+        if norm and recipe.normal and recipe.normal.results then
             found = false
-            for i, res in pairs(rec.normal.results) do
-                -- check if nametags exist (only check res[i] when no name tags exist)
-                if res.name then
-                    if res.name == norm.name then
+            for i, result in pairs(recipe.normal.results) do
+                -- check if nametags exist (only check result[i] when no name tags exist)
+                if result.name then
+                    if result.name == norm.name then
                         found = true
-                        res.amount = res.amount + norm.amount
+                        result.amount = result.amount + norm.amount
                         break
                     end
-                elseif res[1] and res[1] == norm.name then
+                elseif result[1] and result[1] == norm.name then
                     found = true
-                    res[2] = res[2] + norm.amount
+                    result[2] = result[2] + norm.amount
                     break
                 end
             end
-            if not found then table.insert(rec.normal.results, norm) end
+            if not found then table.insert(recipe.normal.results, norm) end
         end
-        -- rec.expensive.results
-        if expens and rec.expensive and rec.expensive.results then
+        -- recipe.expensive.results
+        if expens and recipe.expensive and recipe.expensive.results then
             found = false
-            for i, res in pairs(rec.expensive.results) do
-                -- check if nametags exist (only check res[i] when no name tags exist)
-                if res.name then
-                    if res.name == expens.name then
+            for i, result in pairs(recipe.expensive.results) do
+                -- check if nametags exist (only check result[i] when no name tags exist)
+                if result.name then
+                    if result.name == expens.name then
                         found = true
-                        res.amount = res.amount + expens.amount
+                        result.amount = result.amount + expens.amount
                         break
                     end
-                elseif res[1] and res[1] == expens.name then
+                elseif result[1] and result[1] == expens.name then
                     found = true
-                    res[2] = res[2] + expens.amount
+                    result[2] = result[2] + expens.amount
                     break
                 end
             end
             if not found then
-                table.insert(rec.expensive.results, expens)
+                table.insert(recipe.expensive.results, expens)
             end
         end
     else
@@ -363,26 +363,26 @@ function omni.lib.add_recipe_result(recipename, result)
 end
 
 function omni.lib.remove_recipe_ingredient(recipename, ingredient)
-    local rec = data.raw.recipe[recipename]
-    if rec then
-        if rec.ingredients then
-            for i, ing in pairs(rec.ingredients) do
-                if ing.name == ingredient or ing[1] == ingredient then
-                    table.remove(rec.ingredients, i)
+    local recipe = data.raw.recipe[recipename]
+    if recipe then
+        if recipe.ingredients then
+            for i, ingredient in pairs(recipe.ingredients) do
+                if ingredient.name == ingredient or ingredient[1] == ingredient then
+                    table.remove(recipe.ingredients, i)
                 end
             end
         end
-        if rec.normal and rec.normal.ingredients then
-            for i, ing in pairs(rec.normal.ingredients) do
-                if ing.name == ingredient or ing[1] == ingredient then
-                    table.remove(rec.normal.ingredients, i)
+        if recipe.normal and recipe.normal.ingredients then
+            for i, ingredient in pairs(recipe.normal.ingredients) do
+                if ingredient.name == ingredient or ingredient[1] == ingredient then
+                    table.remove(recipe.normal.ingredients, i)
                 end
             end
         end
-        if rec.expensive and rec.expensive.ingredients then
-            for i, ing in pairs(rec.expensive.ingredients) do
-                if ing.name == ingredient or ing[1] == ingredient then
-                    table.remove(rec.expensive.ingredients, i)
+        if recipe.expensive and recipe.expensive.ingredients then
+            for i, ingredient in pairs(recipe.expensive.ingredients) do
+                if ingredient.name == ingredient or ingredient[1] == ingredient then
+                    table.remove(recipe.expensive.ingredients, i)
                 end
             end
         end
@@ -393,39 +393,39 @@ function omni.lib.remove_recipe_ingredient(recipename, ingredient)
 end
 
 function omni.lib.remove_recipe_result(recipename, result)
-    local rec = data.raw.recipe[recipename]
-    if not rec.result and not rec.normal.result then
-        if rec.results then
-            for i, res in pairs(rec.results) do
-                if res.name == result then
-                    table.remove(rec.results, i)
-                    if rec.normal.main_product and rec.normal.main_product ==
+    local recipe = data.raw.recipe[recipename]
+    if not recipe.result and not recipe.normal.result then
+        if recipe.results then
+            for i, result in pairs(recipe.results) do
+                if result.name == result then
+                    table.remove(recipe.results, i)
+                    if recipe.normal.main_product and recipe.normal.main_product ==
                         result then
-                        rec.normal.main_product = nil
+                        recipe.normal.main_product = nil
                     end
                     break
                 end
             end
         end
-        if rec.normal and rec.normal.results then
-            for i, res in pairs(rec.normal.results) do
-                if res.name == result then
-                    table.remove(rec.normal.results, i)
-                    if rec.normal.main_product and rec.normal.main_product ==
+        if recipe.normal and recipe.normal.results then
+            for i, result in pairs(recipe.normal.results) do
+                if result.name == result then
+                    table.remove(recipe.normal.results, i)
+                    if recipe.normal.main_product and recipe.normal.main_product ==
                         result then
-                        rec.normal.main_product = nil
+                        recipe.normal.main_product = nil
                     end
                     break
                 end
             end
         end
-        if rec.expensive and rec.expensive.results then
-            for i, res in pairs(rec.expensive.results) do
-                if res.name == result then
-                    table.remove(rec.expensive.results, i)
-                    if rec.expensive.main_product and rec.expensive.main_product ==
+        if recipe.expensive and recipe.expensive.results then
+            for i, result in pairs(recipe.expensive.results) do
+                if result.name == result then
+                    table.remove(recipe.expensive.results, i)
+                    if recipe.expensive.main_product and recipe.expensive.main_product ==
                         result then
-                        rec.expensive.main_product = nil
+                        recipe.expensive.main_product = nil
                     end
                     break
                 end
@@ -438,8 +438,8 @@ function omni.lib.remove_recipe_result(recipename, result)
 end
 
 function omni.lib.replace_recipe_result(recipename, result, replacement)
-    local rec = data.raw.recipe[recipename]
-    if rec then
+    local recipe = data.raw.recipe[recipename]
+    if recipe then
         local repname = nil
         local repamount = nil
         local reptype = nil
@@ -451,21 +451,21 @@ function omni.lib.replace_recipe_result(recipename, result, replacement)
             repname = replacement
         end
         -- Single result
-        if rec.result and rec.result == result then rec.result = repname end
-        if rec.normal and rec.normal.result and rec.normal.result == result then
-            rec.normal.result = repname
+        if recipe.result and recipe.result == result then recipe.result = repname end
+        if recipe.normal and recipe.normal.result and recipe.normal.result == result then
+            recipe.normal.result = repname
         end
-        if rec.expensive and rec.expensive.result and rec.expensive.result ==
-            result then rec.expensive.result = repname end
+        if recipe.expensive and recipe.expensive.result and recipe.expensive.result ==
+            result then recipe.expensive.result = repname end
 
-        -- rec.results
+        -- recipe.results
         local ress = {}
-        if rec.results then ress[#ress + 1] = rec.results end
-        if rec.normal and rec.normal.results then
-            ress[#ress + 1] = rec.normal.results
+        if recipe.results then ress[#ress + 1] = recipe.results end
+        if recipe.normal and recipe.normal.results then
+            ress[#ress + 1] = recipe.normal.results
         end
-        if rec.expensive and rec.expensive.results then
-            ress[#ress + 1] = rec.expensive.results
+        if recipe.expensive and recipe.expensive.results then
+            ress[#ress + 1] = recipe.expensive.results
         end
 
         for _, diff in pairs(ress) do
@@ -474,18 +474,18 @@ function omni.lib.replace_recipe_result(recipename, result, replacement)
             -- create a new variable that gets reset to repamount for each diff
             local amount = repamount
             -- check if the replacement is already an result
-            for i, res in pairs(diff) do
-                if (res.name or res[1]) == repname then
+            for i, result in pairs(diff) do
+                if (result.name or result[1]) == repname then
                     found = true
                     num = i
-                    amount = (repamount or 1) + (res.amount or res[2])
+                    amount = (repamount or 1) + (result.amount or result[2])
                     break
                 end
             end
 
-            for i, res in pairs(diff) do
-                -- check if nametags exist (only check res[i] when no name tags exist)
-                if res.name and res.name == result then
+            for i, result in pairs(diff) do
+                -- check if nametags exist (only check result[i] when no name tags exist)
+                if result.name and result.name == result then
                     if found then
                         if diff[num].amount then
                             diff[num].amount = amount
@@ -494,12 +494,12 @@ function omni.lib.replace_recipe_result(recipename, result, replacement)
                         end
                         diff[i] = nil
                     else
-                        res.name = repname
-                        res.amount = repamount or res.amount
-                        res.type = reptype or res.type
+                        result.name = repname
+                        result.amount = repamount or result.amount
+                        result.type = reptype or result.type
                     end
                     break
-                elseif not res.name and res[1] and res[1] == result then
+                elseif not result.name and result[1] and result[1] == result then
                     if found then
                         if diff[num].amount then
                             diff[num].amount = amount
@@ -508,29 +508,29 @@ function omni.lib.replace_recipe_result(recipename, result, replacement)
                         end
                         diff[i] = nil
                     else
-                        res[1] = repname
-                        res[2] = repamount or res[2]
+                        result[1] = repname
+                        result[2] = repamount or result[2]
                     end
                     break
                 end
             end
         end
         -- Check if the main product was replaced
-        if rec.main_product and rec.main_product == result then
-            rec.main_product = repname
+        if recipe.main_product and recipe.main_product == result then
+            recipe.main_product = repname
         end
-        if rec.normal and rec.normal.main_product and rec.normal.main_product ==
-            result then rec.normal.main_product = repname end
-        if rec.expensive and rec.expensive.main_product and
-            rec.expensive.main_product == result then
-            rec.normexpensiveal.main_product = repname
+        if recipe.normal and recipe.normal.main_product and recipe.normal.main_product ==
+            result then recipe.normal.main_product = repname end
+        if recipe.expensive and recipe.expensive.main_product and
+            recipe.expensive.main_product == result then
+            recipe.normexpensiveal.main_product = repname
         end
     end
 end
 
 function omni.lib.replace_recipe_ingredient(recipename, ingredient, replacement)
-    local rec = data.raw.recipe[recipename]
-    if rec then
+    local recipe = data.raw.recipe[recipename]
+    if recipe then
         local repname = nil
         local repamount = nil
         local reptype = nil
@@ -543,12 +543,12 @@ function omni.lib.replace_recipe_ingredient(recipename, ingredient, replacement)
         end
 
         local ings = {}
-        if rec.ingredients then ings[#ings + 1] = rec.ingredients end
-        if rec.normal and rec.normal.ingredients then
-            ings[#ings + 1] = rec.normal.ingredients
+        if recipe.ingredients then ings[#ings + 1] = recipe.ingredients end
+        if recipe.normal and recipe.normal.ingredients then
+            ings[#ings + 1] = recipe.normal.ingredients
         end
-        if rec.expensive and rec.expensive.ingredients then
-            ings[#ings + 1] = rec.expensive.ingredients
+        if recipe.expensive and recipe.expensive.ingredients then
+            ings[#ings + 1] = recipe.expensive.ingredients
         end
 
         for _, diff in pairs(ings) do
@@ -557,18 +557,18 @@ function omni.lib.replace_recipe_ingredient(recipename, ingredient, replacement)
             -- create a new variable that gets reset to repamount for each diff
             local amount = repamount
             -- check if the replacement is already an ingredient
-            for i, ing in pairs(diff) do
-                if (ing.name or ing[1]) == repname then
+            for i, ingredient in pairs(diff) do
+                if (ingredient.name or ingredient[1]) == repname then
                     found = true
                     num = i
-                    amount = (repamount or 1) + (ing.amount or ing[2])
+                    amount = (repamount or 1) + (ingredient.amount or ingredient[2])
                     break
                 end
             end
 
-            for i, ing in pairs(diff) do
-                -- check if nametags exist (only check ing[i] when no name tags exist)
-                if ing.name and ing.name == ingredient then
+            for i, ingredient in pairs(diff) do
+                -- check if nametags exist (only check ingredient[i] when no name tags exist)
+                if ingredient.name and ingredient.name == ingredient then
                     if found then
                         if diff[num].amount then
                             diff[num].amount = amount
@@ -577,12 +577,12 @@ function omni.lib.replace_recipe_ingredient(recipename, ingredient, replacement)
                         end
                         diff[i] = nil
                     else
-                        ing.name = repname
-                        ing.amount = repamount or ing.amount
-                        ing.type = reptype or ing.type
+                        ingredient.name = repname
+                        ingredient.amount = repamount or ingredient.amount
+                        ingredient.type = reptype or ingredient.type
                     end
                     break
-                elseif not ing.name and ing[1] and ing[1] == ingredient then
+                elseif not ingredient.name and ingredient[1] and ingredient[1] == ingredient then
                     if found then
                         if diff[num].amount then
                             diff[num].amount = amount
@@ -591,8 +591,8 @@ function omni.lib.replace_recipe_ingredient(recipename, ingredient, replacement)
                         end
                         diff[i] = nil
                     else
-                        ing[1] = repname
-                        ing[2] = repamount or ing[2]
+                        ingredient[1] = repname
+                        ingredient[2] = repamount or ingredient[2]
                     end
                     break
                 end
@@ -602,49 +602,49 @@ function omni.lib.replace_recipe_ingredient(recipename, ingredient, replacement)
 end
 
 function omni.lib.multiply_recipe_ingredient(recipename, ingredient, mult)
-    local rec = data.raw.recipe[recipename]
-    if rec then
-        -- rec.ingredients
-        if rec.ingredients then
-            for i, ing in pairs(rec.ingredients) do
-                -- check if nametags exist (only check ing[i] when no name tags exist)
-                if ing.name then
-                    if ing.name == ingredient then
-                        ing.amount = omni.lib.round(ing.amount * mult)
+    local recipe = data.raw.recipe[recipename]
+    if recipe then
+        -- recipe.ingredients
+        if recipe.ingredients then
+            for i, ingredient in pairs(recipe.ingredients) do
+                -- check if nametags exist (only check ingredient[i] when no name tags exist)
+                if ingredient.name then
+                    if ingredient.name == ingredient then
+                        ingredient.amount = omni.lib.round(ingredient.amount * mult)
                         break
                     end
-                elseif ing[1] and ing[1] == ingredient then
-                    ing[2] = omni.lib.round(ing[2] * mult)
+                elseif ingredient[1] and ingredient[1] == ingredient then
+                    ingredient[2] = omni.lib.round(ingredient[2] * mult)
                     break
                 end
             end
         end
-        -- rec.normal.ingredients
-        if rec.normal and rec.normal.ingredients then
-            for i, ing in pairs(rec.normal.ingredients) do
-                -- check if nametags exist (only check ing[i] when no name tags exist)
-                if ing.name then
-                    if ing.name == ingredient then
-                        ing.amount = omni.lib.round(ing.amount * mult)
+        -- recipe.normal.ingredients
+        if recipe.normal and recipe.normal.ingredients then
+            for i, ingredient in pairs(recipe.normal.ingredients) do
+                -- check if nametags exist (only check ingredient[i] when no name tags exist)
+                if ingredient.name then
+                    if ingredient.name == ingredient then
+                        ingredient.amount = omni.lib.round(ingredient.amount * mult)
                         break
                     end
-                elseif ing[1] and ing[1] == ingredient then
-                    ing[2] = omni.lib.round(ing[2] * mult)
+                elseif ingredient[1] and ingredient[1] == ingredient then
+                    ingredient[2] = omni.lib.round(ingredient[2] * mult)
                     break
                 end
             end
         end
-        -- rec.expensive.ingredients
-        if rec.expensive and rec.expensive.ingredients then
-            for i, ing in pairs(rec.expensive.ingredients) do
-                -- check if nametags exist (only check ing[i] when no name tags exist)
-                if ing.name then
-                    if ing.name == ingredient then
-                        ing.amount = omni.lib.round(ing.amount * mult)
+        -- recipe.expensive.ingredients
+        if recipe.expensive and recipe.expensive.ingredients then
+            for i, ingredient in pairs(recipe.expensive.ingredients) do
+                -- check if nametags exist (only check ingredient[i] when no name tags exist)
+                if ingredient.name then
+                    if ingredient.name == ingredient then
+                        ingredient.amount = omni.lib.round(ingredient.amount * mult)
                         break
                     end
-                elseif ing[1] and ing[1] == ingredient then
-                    ing[2] = omni.lib.round(ing[2] * mult)
+                elseif ingredient[1] and ingredient[1] == ingredient then
+                    ingredient[2] = omni.lib.round(ingredient[2] * mult)
                     break
                 end
             end
@@ -653,74 +653,74 @@ function omni.lib.multiply_recipe_ingredient(recipename, ingredient, mult)
 end
 
 function omni.lib.multiply_recipe_result(recipename, result, mult)
-    local rec = data.raw.recipe[recipename]
-    if rec then
+    local recipe = data.raw.recipe[recipename]
+    if recipe then
         -- Single result
-        if rec.result and rec.result == result then
-            rec.results = {type = "item", name = rec.result, amount = 1}
-            rec.result = nil
-            rec.result_count = nil
+        if recipe.result and recipe.result == result then
+            recipe.results = {type = "item", name = recipe.result, amount = 1}
+            recipe.result = nil
+            recipe.result_count = nil
         end
-        if rec.normal and rec.normal.result and rec.normal.result == result then
-            rec.normal.results = {
+        if recipe.normal and recipe.normal.result and recipe.normal.result == result then
+            recipe.normal.results = {
                 type = "item",
-                name = rec.normal.result,
+                name = recipe.normal.result,
                 amount = 1
             }
-            rec.normal.result = nil
-            rec.normal.result_count = nil
+            recipe.normal.result = nil
+            recipe.normal.result_count = nil
         end
-        if rec.expensive and rec.expensive.result and rec.expensive.result ==
+        if recipe.expensive and recipe.expensive.result and recipe.expensive.result ==
             result then
-            rec.expensive.results = {
+            recipe.expensive.results = {
                 type = "item",
-                name = rec.expensive.result,
+                name = recipe.expensive.result,
                 amount = 1
             }
-            rec.expensive.result = nil
-            rec.expensive.result_count = nil
+            recipe.expensive.result = nil
+            recipe.expensive.result_count = nil
         end
-        -- rec.results
-        if rec.results then
-            for i, res in pairs(rec.results) do
-                -- check if nametags exist (only check res[i] when no name tags exist)
-                if res.name then
-                    if res.name == result then
-                        res.amount = omni.lib.round(res.amount * mult)
+        -- recipe.results
+        if recipe.results then
+            for i, result in pairs(recipe.results) do
+                -- check if nametags exist (only check result[i] when no name tags exist)
+                if result.name then
+                    if result.name == result then
+                        result.amount = omni.lib.round(result.amount * mult)
                         break
                     end
-                elseif res[1] and res[1] == result then
-                    res[2] = omni.lib.round(res[2] * mult)
+                elseif result[1] and result[1] == result then
+                    result[2] = omni.lib.round(result[2] * mult)
                     break
                 end
             end
         end
-        -- rec.normal.results
-        if rec.normal and rec.normal.results then
-            for i, res in pairs(rec.normal.results) do
-                -- check if nametags exist (only check res[i] when no name tags exist)
-                if res.name then
-                    if res.name == result then
-                        res.amount = omni.lib.round(res.amount * mult)
+        -- recipe.normal.results
+        if recipe.normal and recipe.normal.results then
+            for i, result in pairs(recipe.normal.results) do
+                -- check if nametags exist (only check result[i] when no name tags exist)
+                if result.name then
+                    if result.name == result then
+                        result.amount = omni.lib.round(result.amount * mult)
                         break
                     end
-                elseif res[1] and res[1] == result then
-                    res[2] = omni.lib.round(res[2] * mult)
+                elseif result[1] and result[1] == result then
+                    result[2] = omni.lib.round(result[2] * mult)
                     break
                 end
             end
         end
-        -- rec.expensive.results
-        if rec.expensive and rec.expensive.results then
-            for i, res in pairs(rec.expensive.results) do
-                -- check if nametags exist (only check res[i] when no name tags exist)
-                if res.name then
-                    if res.name == result then
-                        res.amount = omni.lib.round(res.amount * mult)
+        -- recipe.expensive.results
+        if recipe.expensive and recipe.expensive.results then
+            for i, result in pairs(recipe.expensive.results) do
+                -- check if nametags exist (only check result[i] when no name tags exist)
+                if result.name then
+                    if result.name == result then
+                        result.amount = omni.lib.round(result.amount * mult)
                         break
                     end
-                elseif res[1] and res[1] == result then
-                    res[2] = omni.lib.round(res[2] * mult)
+                elseif result[1] and result[1] == result then
+                    result[2] = omni.lib.round(result[2] * mult)
                     break
                 end
             end
@@ -746,35 +746,35 @@ end
 
 -- Checks if a recipe contains a specific material as result
 function omni.lib.recipe_result_contains(recipename, itemname)
-    local rec = data.raw.recipe[recipename]
-    if rec then
+    local recipe = data.raw.recipe[recipename]
+    if recipe then
         -- Single result
-        if rec.result and rec.result == itemname then return true end
-        if rec.normal and rec.normal.result and rec.normal.result == itemname then
+        if recipe.result and recipe.result == itemname then return true end
+        if recipe.normal and recipe.normal.result and recipe.normal.result == itemname then
             return true
         end
-        if rec.expensive and rec.expensive.result and rec.expensive.result ==
+        if recipe.expensive and recipe.expensive.result and recipe.expensive.result ==
             itemname then return true end
-        -- rec.results
-        if rec.results then
-            for i, res in pairs(rec.results) do
-                if omni.lib.is_in_table(itemname, res) then
+        -- recipe.results
+        if recipe.results then
+            for i, result in pairs(recipe.results) do
+                if omni.lib.is_in_table(itemname, result) then
                     return true
                 end
             end
         end
-        -- rec.normal.results
-        if rec.normal and rec.normal.results then
-            for i, res in pairs(rec.normal.results) do
-                if omni.lib.is_in_table(itemname, res) then
+        -- recipe.normal.results
+        if recipe.normal and recipe.normal.results then
+            for i, result in pairs(recipe.normal.results) do
+                if omni.lib.is_in_table(itemname, result) then
                     return true
                 end
             end
         end
-        -- rec.expensive.results
-        if rec.expensive and rec.expensive.results then
-            for i, res in pairs(rec.expensive.results) do
-                if omni.lib.is_in_table(itemname, res) then
+        -- recipe.expensive.results
+        if recipe.expensive and recipe.expensive.results then
+            for i, result in pairs(recipe.expensive.results) do
+                if omni.lib.is_in_table(itemname, result) then
                     return true
                 end
             end
@@ -789,9 +789,9 @@ function omni.lib.find_recipe(itemname)
     elseif type(itemname) ~= "string" then
         return nil
     end
-    for _, rec in pairs(data.raw.recipe) do
-        if omni.lib.recipe_result_contains(rec.name, itemname) then
-            return rec
+    for _, recipe in pairs(data.raw.recipe) do
+        if omni.lib.recipe_result_contains(recipe.name, itemname) then
+            return recipe
         end
     end
     -- log("Could not find "..item.."'s recipe prototype, check it's type.")
@@ -836,25 +836,25 @@ function omni.lib.replace_recipe_all_techs(recipename, replacement)
 end
 
 function omni.lib.enable_recipe(recipename)
-    local rec = data.raw.recipe[recipename]
-    if rec then
-        -- in some cases rec.enabled does not exist at all...
-        if rec.enabled or not (rec.normal or rec.expensive) then
-            rec.enabled = true
+    local recipe = data.raw.recipe[recipename]
+    if recipe then
+        -- in some cases recipe.enabled does not exist at all...
+        if recipe.enabled or not (recipe.normal or recipe.expensive) then
+            recipe.enabled = true
         end
-        if rec.normal then rec.normal.enabled = true end
-        if rec.expensive then rec.expensive.enabled = true end
+        if recipe.normal then recipe.normal.enabled = true end
+        if recipe.expensive then recipe.expensive.enabled = true end
     end
 end
 
 function omni.lib.disable_recipe(recipename)
-    local rec = data.raw.recipe[recipename]
-    if rec then
-        -- in some cases rec.enabled does not exist at all...
-        if rec.enabled or not (rec.normal or rec.expensive) then
-            rec.enabled = false
+    local recipe = data.raw.recipe[recipename]
+    if recipe then
+        -- in some cases recipe.enabled does not exist at all...
+        if recipe.enabled or not (recipe.normal or recipe.expensive) then
+            recipe.enabled = false
         end
-        if rec.normal then rec.normal.enabled = false end
-        if rec.expensive then rec.expensive.enabled = false end
+        if recipe.normal then recipe.normal.enabled = false end
+        if recipe.expensive then recipe.expensive.enabled = false end
     end
 end
