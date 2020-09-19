@@ -132,6 +132,13 @@ local function split_expensive_recipe(recipe)
     recipe.normal = {}
     recipe.expensive = {}
 
+    if recipe.energy_required then
+        recipe.normal.energy_required = recipe.energy_required
+        recipe.expensive.energy_required = recipe.energy_required
+        -- Clean base recipe
+        recipe.energy_required = nil
+    end
+
     if recipe.ingredients then
         recipe.normal.ingredients = table.deepcopy(recipe.ingredients)
         recipe.expensive.ingredients = table.deepcopy(recipe.ingredients)
